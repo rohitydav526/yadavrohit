@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPulse - Student Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-slate-800 flex flex-col md:flex-row overflow-hidden bg-slate-50">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col justify-between hidden md:flex transition-all duration-300 z-30">
+        <div>
+            <!-- Logo Section -->
+            <div class="h-16 flex items-center justify-between px-6 bg-slate-950 border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-brand-600 text-white p-2 rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+                    </div>
+                    <span class="text-xl font-bold text-white tracking-wide">EduPulse</span>
+                </div>
+                <button id="close-sidebar-mobile" class="md:hidden text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="mt-6 px-4 space-y-1">
+                <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item flex items-center px-4 py-3 rounded-xl bg-brand-600 text-white font-medium transition-all group">
+                    <i class="fa-solid fa-chart-pie w-6 text-lg"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" onclick="switchTab('students')" id="nav-students" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white font-medium transition-all group">
+                    <i class="fa-solid fa-user-graduate w-6 text-lg"></i>
+                    <span>Students</span>
+                </a>
+                <a href="#" onclick="switchTab('courses')" id="nav-courses" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white font-medium transition-all group">
+                    <i class="fa-solid fa-book-open w-6 text-lg"></i>
+                    <span>Courses</span>
+                </a>
+                <a href="#" onclick="switchTab('attendance')" id="nav-attendance" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white font-medium transition-all group">
+                    <i class="fa-solid fa-calendar-check w-6 text-lg"></i>
+                    <span>Attendance</span>
+                </a>
+                <a href="#" onclick="switchTab('analytics')" id="nav-analytics" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white font-medium transition-all group">
+                    <i class="fa-solid fa-chart-line w-6 text-lg"></i>
+                    <span>Analytics</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- System User Quick Profile -->
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center space-x-3 p-2 bg-slate-800/50 rounded-xl">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150" alt="Admin" class="w-10 h-10 rounded-full object-cover">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-white truncate">Dr. Sarah Jenkins</p>
+                    <p class="text-xs text-slate-400 truncate">Administrator</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+
+        <!-- Top Navigation Header -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-20">
+            <div class="flex items-center space-x-4">
+                <button id="open-sidebar-mobile" class="md:hidden text-slate-600 hover:text-slate-900 focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div class="relative hidden sm:block w-64 md:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="globalSearchInput" onkeyup="handleGlobalSearch()" placeholder="Quick search..." class="w-full pl-9 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-500 focus:outline-none transition-all">
+                </div>
+            </div>
+
+            <!-- Actions Right -->
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <button onclick="openModal('addStudentModal')" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center space-x-2 transition-all shadow-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">Add Student</span>
+                </button>
+                
+                <div class="relative">
+                    <button class="p-2 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 relative">
+                        <i class="fa-regular fa-bell text-lg"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+
+            <!-- TAB 1: DASHBOARD OVERVIEW -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-brand-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold">Welcome back, Dr. Jenkins!</h1>
+                        <p class="text-brand-100 text-sm mt-1">Here is what is happening across your institution today.</p>
+                    </div>
+                    <span class="bg-white/10 border border-white/20 text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">Academic Term: Fall 2026</span>
+                </div>
+
+                <!-- Stats Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Enrolled</span>
+                            <div class="p-2.5 bg-blue-50 text-brand-600 rounded-lg"><i class="fa-solid fa-users text-lg"></i></div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2" id="statTotalStudents">1,248</h3>
+                        <p class="text-xs text-emerald-600 mt-2 flex items-center font-medium">
+                            <i class="fa-solid fa-arrow-up mr-1"></i> +4.2% from last term
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Courses</span>
+                            <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fa-solid fa-book text-lg"></i></div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2">42</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Across 6 Departments</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Avg. Attendance</span>
+                            <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-user-check text-lg"></i></div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2">92.4%</h3>
+                        <p class="text-xs text-emerald-600 mt-2 flex items-center font-medium">
+                            <i class="fa-solid fa-arrow-up mr-1"></i> +1.8% this week
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Average GPA</span>
+                            <div class="p-2.5 bg-amber-50 text-amber-600 rounded-lg"><i class="fa-solid fa-award text-lg"></i></div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2">3.58</h3>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Target: 3.50</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-base font-bold text-slate-800">Enrollment Trends</h2>
+                            <select class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
+                                <option>Last 6 Months</option>
+                                <option>This Year</option>
+                            </select>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="enrollmentChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <h2 class="text-base font-bold text-slate-800 mb-4">Department Distribution</h2>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="departmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities & Top Performers Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Students Table Mini -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+                            <h2 class="text-base font-bold text-slate-800">Recently Enrolled</h2>
+                            <button onclick="switchTab('students')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View All</button>
+                        </div>
+                        <div class="divide-y divide-slate-100" id="recentStudentsContainer">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Announcements / Tasks -->
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                        <h2 class="text-base font-bold text-slate-800 mb-4">Upcoming Academic Events</h2>
+                        <div class="space-y-3">
+                            <div class="flex items-start space-x-3 p-3 rounded-lg bg-slate-50">
+                                <div class="bg-blue-100 text-brand-600 font-bold px-2.5 py-1 rounded text-xs text-center min-w-[50px]">
+                                    OCT 24
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-slate-800">Mid-Semester Examinations</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">Applies to all Computer Science & Engineering streams.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 rounded-lg bg-slate-50">
+                                <div class="bg-amber-100 text-amber-700 font-bold px-2.5 py-1 rounded text-xs text-center min-w-[50px]">
+                                    NOV 02
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-slate-800">Course Registration Deadline</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">Final day for elective selections without late fee.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3 p-3 rounded-lg bg-slate-50">
+                                <div class="bg-emerald-100 text-emerald-700 font-bold px-2.5 py-1 rounded text-xs text-center min-w-[50px]">
+                                    NOV 15
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-slate-800">Annual Tech Symposium</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">Student showcase and industry keynotes in Main Auditorium.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: STUDENTS DIRECTORY -->
+            <section id="tab-students" class="tab-content hidden space-y-6">
+                <!-- Header Controls -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <div class="relative flex-1 sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="studentSearchInput" onkeyup="renderStudentsTable()" placeholder="Search by name, ID or email..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                        </div>
+                        <select id="departmentFilter" onchange="renderStudentsTable()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 bg-white">
+                            <option value="All">All Departments</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Electrical Eng.">Electrical Eng.</option>
+                            <option value="Mechanical Eng.">Mechanical Eng.</option>
+                        </select>
+                        <select id="statusFilter" onchange="renderStudentsTable()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 bg-white">
+                            <option value="All">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="On Leave">On Leave</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                        <button onclick="exportToCSV()" class="px-3.5 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center space-x-2">
+                            <i class="fa-solid fa-file-export text-slate-500"></i>
+                            <span>Export</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th class="py-3.5 px-4">Student</th>
+                                    <th class="py-3.5 px-4">ID</th>
+                                    <th class="py-3.5 px-4">Department</th>
+                                    <th class="py-3.5 px-4">GPA</th>
+                                    <th class="py-3.5 px-4">Attendance</th>
+                                    <th class="py-3.5 px-4">Status</th>
+                                    <th class="py-3.5 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody" class="divide-y divide-slate-200 text-sm">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Footer -->
+                    <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <span class="text-xs text-slate-500" id="tablePaginationInfo">Showing 1 to 5 of 5 entries</span>
+                        <div class="flex space-x-1">
+                            <button class="px-3 py-1 border border-slate-300 rounded text-xs font-medium text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-50" disabled>Previous</button>
+                            <button class="px-3 py-1 border border-slate-300 rounded text-xs font-medium text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-50" disabled>Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: COURSES -->
+            <section id="tab-courses" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Active Courses</h2>
+                        <p class="text-sm text-slate-500">Overview of courses offered in current semester</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="coursesGridContainer">
+                    <!-- Course cards dynamically generated -->
+                </div>
+            </section>
+
+            <!-- TAB 4: ATTENDANCE TRACKER -->
+            <section id="tab-attendance" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Daily Attendance Marker</h2>
+                            <p class="text-xs text-slate-500">Select course and date to record or modify attendance</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="date" value="2026-10-16" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-brand-500">
+                            <select class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-brand-500">
+                                <option>CS101 - Intro to CS</option>
+                                <option>DS201 - Data Structures</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
+                                <tr>
+                                    <th class="py-3 px-4">Student</th>
+                                    <th class="py-3 px-4">ID</th>
+                                    <th class="py-3 px-4 text-center">Present</th>
+                                    <th class="py-3 px-4 text-center">Absent</th>
+                                    <th class="py-3 px-4 text-center">Late</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTableBody" class="divide-y divide-slate-100">
+                                <!-- Attendance dynamic list -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-end pt-2">
+                        <button onclick="saveAttendance()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2 rounded-lg transition-all shadow-sm">
+                            Save Attendance
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: ANALYTICS -->
+            <section id="tab-analytics" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-800 mb-4">Grade Point Averages Distribution</h3>
+                        <div class="h-64 relative">
+                            <canvas id="gpaDistributionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-800 mb-4">Monthly Attendance Trends</h3>
+                        <div class="h-64 relative">
+                            <canvas id="attendanceTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL: ADD / EDIT STUDENT -->
+    <div id="addStudentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                <h3 class="text-lg font-bold text-slate-900" id="modalTitle">Add New Student</h3>
+                <button onclick="closeModal('addStudentModal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="studentForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="editStudentId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                    <input type="text" id="formName" required placeholder="e.g. Jane Doe" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                    <input type="email" id="formEmail" required placeholder="e.g. jane@university.edu" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Department</label>
+                        <select id="formDepartment" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Electrical Eng.">Electrical Eng.</option>
+                            <option value="Mechanical Eng.">Mechanical Eng.</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">GPA</label>
+                        <input type="number" step="0.01" min="0" max="4.0" id="formGPA" required placeholder="e.g. 3.85" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                    <select id="formStatus" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                        <option value="Active">Active</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('addStudentModal')" class="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg shadow-sm">Save Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage" class="text-sm font-medium">Operation completed successfully!</span>
+    </div>
+
+    <script>
+        // --- Core Application State Data ---
+        let students = [
+            { id: "STU-1001", name: "Alex Morgan", email: "alex.m@univ.edu", department: "Computer Science", gpa: 3.92, attendance: "98%", status: "Active", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" },
+            { id: "STU-1002", name: "Ethan Hunt", email: "e.hunt@univ.edu", department: "Data Science", gpa: 3.45, attendance: "91%", status: "Active", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150" },
+            { id: "STU-1003", name: "Sophia Chen", email: "sophia.c@univ.edu", department: "Computer Science", gpa: 3.88, attendance: "95%", status: "Active", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150" },
+            { id: "STU-1004", name: "Liam Patel", email: "liam.p@univ.edu", department: "Electrical Eng.", gpa: 2.95, attendance: "84%", status: "On Leave", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150" },
+            { id: "STU-1005", name: "Emma Watson", email: "e.watson@univ.edu", department: "Mechanical Eng.", gpa: 3.70, attendance: "93%", status: "Active", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150" }
+        ];
+
+        const courses = [
+            { code: "CS101", name: "Intro to Computer Science", dept: "Computer Science", instructor: "Dr. Alan Turing", students: 142, icon: "fa-code", bg: "bg-blue-50 text-blue-600" },
+            { code: "DS201", name: "Data Structures & Algorithms", dept: "Data Science", instructor: "Prof. Grace Hopper", students: 98, icon: "fa-database", bg: "bg-emerald-50 text-emerald-600" },
+            { code: "EE302", name: "Digital Circuit Design", dept: "Electrical Eng.", instructor: "Dr. Nikola Tesla", students: 76, icon: "fa-bolt", bg: "bg-amber-50 text-amber-600" },
+            { code: "ME105", name: "Engineering Mechanics", dept: "Mechanical Eng.", instructor: "Prof. Isaac Newton", students: 110, icon: "fa-gears", bg: "bg-purple-50 text-purple-600" }
+        ];
+
+        let chartInstances = {};
+
+        // --- Initialization on Load ---
+        window.onload = function() {
+            renderStudentsTable();
+            renderRecentStudents();
+            renderCourses();
+            renderAttendanceList();
+            initCharts();
+            updateStats();
+            setupMobileSidebar();
+        };
+
+        // --- Tab Navigation Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-brand-600', 'text-white');
+                el.classList.add('hover:bg-slate-800', 'hover:text-white');
+            });
+
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-brand-600', 'text-white');
+                activeNav.classList.remove('hover:bg-slate-800');
+            }
+        }
+
+        // --- Render Functions ---
+        function renderStudentsTable() {
+            const search = document.getElementById('studentSearchInput').value.toLowerCase();
+            const dept = document.getElementById('departmentFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '';
+
+            const filtered = students.filter(s => {
+                const matchesSearch = s.name.toLowerCase().includes(search) || s.id.toLowerCase().includes(search) || s.email.toLowerCase().includes(search);
+                const matchesDept = dept === 'All' || s.department === dept;
+                const matchesStatus = status === 'All' || s.status === status;
+                return matchesSearch && matchesDept && matchesStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No student records found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(s => {
+                const statusBg = s.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : s.status === 'On Leave' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800';
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 flex items-center space-x-3">
+                        <img src="${s.avatar}" class="w-9 h-9 rounded-full object-cover">
+                        <div>
+                            <div class="font-semibold text-slate-900">${s.name}</div>
+                            <div class="text-xs text-slate-500">${s.email}</div>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono text-xs font-medium text-slate-600">${s.id}</td>
+                    <td class="py-3.5 px-4 text-slate-700">${s.department}</td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-900">${s.gpa}</td>
+                    <td class="py-3.5 px-4 text-slate-700">${s.attendance}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${statusBg}">${s.status}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right space-x-2">
+                        <button onclick="editStudent('${s.id}')" class="text-slate-400 hover:text-brand-600"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteStudent('${s.id}')" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('tablePaginationInfo').innerText = `Showing ${filtered.length} of ${students.length} entries`;
+        }
+
+        function renderRecentStudents() {
+            const container = document.getElementById('recentStudentsContainer');
+            container.innerHTML = '';
+
+            students.slice(0, 3).forEach(s => {
+                const item = document.createElement('div');
+                item.className = "p-4 flex items-center justify-between hover:bg-slate-50 transition-colors";
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <img src="${s.avatar}" class="w-9 h-9 rounded-full object-cover">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">${s.name}</p>
+                            <p class="text-xs text-slate-500">${s.department}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-mono font-medium text-slate-400">${s.id}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderCourses() {
+            const container = document.getElementById('coursesGridContainer');
+            container.innerHTML = '';
+
+            courses.forEach(c => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-mono font-bold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md">${c.code}</span>
+                            <div class="p-2 rounded-lg ${c.bg}"><i class="fa-solid ${c.icon}"></i></div>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-base mb-1">${c.name}</h3>
+                        <p class="text-xs text-slate-500 mb-4"><i class="fa-solid fa-user-tie mr-1"></i> ${c.instructor}</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-600">
+                        <span><i class="fa-solid fa-graduation-cap mr-1"></i> ${c.students} Enrolled</span>
+                        <span class="font-medium text-brand-600 hover:underline cursor-pointer">View Syllabus</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderAttendanceList() {
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '';
+
+            students.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-800">${s.name}</td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500">${s.id}</td>
+                    <td class="py-3 px-4 text-center">
+                        <input type="radio" name="att_${s.id}" value="present" checked class="text-brand-600 focus:ring-brand-500">
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <input type="radio" name="att_${s.id}" value="absent" class="text-red-600 focus:ring-red-500">
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <input type="radio" name="att_${s.id}" value="late" class="text-amber-600 focus:ring-amber-500">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- CRUD Operations ---
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById('studentForm').reset();
+            document.getElementById('editStudentId').value = '';
+            document.getElementById('modalTitle').innerText = 'Add New Student';
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editStudentId').value;
+            const name = document.getElementById('formName').value;
+            const email = document.getElementById('formEmail').value;
+            const dept = document.getElementById('formDepartment').value;
+            const gpa = parseFloat(document.getElementById('formGPA').value).toFixed(2);
+            const status = document.getElementById('formStatus').value;
+
+            if (editId) {
+                // Update
+                const index = students.findIndex(s => s.id === editId);
+                if (index !== -1) {
+                    students[index] = { ...students[index], name, email, department: dept, gpa, status };
+                    showToast("Student profile updated successfully!");
+                }
+            } else {
+                // Add New
+                const newId = `STU-${1000 + students.length + 1}`;
+                const avatar = `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random()*100000)}?auto=format&fit=crop&q=80&w=150`;
+                students.push({ id: newId, name, email, department: dept, gpa, attendance: "100%", status, avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150" });
+                showToast("New student registered!");
+            }
+
+            closeModal('addStudentModal');
+            renderStudentsTable();
+            renderRecentStudents();
+            updateStats();
+        }
+
+        function editStudent(id) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            document.getElementById('editStudentId').value = student.id;
+            document.getElementById('formName').value = student.name;
+            document.getElementById('formEmail').value = student.email;
+            document.getElementById('formDepartment').value = student.department;
+            document.getElementById('formGPA').value = student.gpa;
+            document.getElementById('formStatus').value = student.status;
+
+            document.getElementById('modalTitle').innerText = 'Edit Student Details';
+            openModal('addStudentModal');
+        }
+
+        function deleteStudent(id) {
+            students = students.filter(s => s.id !== id);
+            renderStudentsTable();
+            renderRecentStudents();
+            updateStats();
+            showToast("Student record removed.");
+        }
+
+        function saveAttendance() {
+            showToast("Attendance marked and saved!");
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalStudents').innerText = students.length.toLocaleString();
+        }
+
+        // --- Global Search & Utility ---
+        function handleGlobalSearch() {
+            const query = document.getElementById('globalSearchInput').value.toLowerCase();
+            if(query.trim() !== "") {
+                switchTab('students');
+                document.getElementById('studentSearchInput').value = query;
+                renderStudentsTable();
+            }
+        }
+
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,ID,Name,Email,Department,GPA,Attendance,Status\n";
+            students.forEach(s => {
+                csvContent += `${s.id},"${s.name}",${s.email},"${s.department}",${s.gpa},${s.attendance},${s.status}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Students_Directory.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Exported to CSV!");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function setupMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            document.getElementById('open-sidebar-mobile').addEventListener('click', () => {
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('fixed', 'inset-y-0', 'left-0', 'z-50', 'w-64');
+            });
+            document.getElementById('close-sidebar-mobile').addEventListener('click', () => {
+                sidebar.classList.add('hidden');
+            });
+        }
+
+        // --- Chart.js Data Visualizations ---
+        function initCharts() {
+            // Chart 1: Enrollment Trend
+            const ctx1 = document.getElementById('enrollmentChart').getContext('2d');
+            chartInstances.enrollment = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [{
+                        label: 'Enrolled Students',
+                        data: [980, 1050, 1100, 1180, 1220, 1248],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { grid: { borderDash: [4, 4] } }, x: { grid: { display: false } } }
+                }
+            });
+
+            // Chart 2: Department Doughnut
+            const ctx2 = document.getElementById('departmentChart').getContext('2d');
+            chartInstances.department = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Comp Sci', 'Data Sci', 'Elec Eng', 'Mech Eng'],
+                    datasets: [{
+                        data: [45, 25, 15, 15],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // Chart 3: GPA Bar
+            const ctx3 = document.getElementById('gpaDistributionChart').getContext('2d');
+            chartInstances.gpa = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['< 2.5', '2.5 - 3.0', '3.0 - 3.5', '3.5 - 4.0'],
+                    datasets: [{
+                        label: 'Students Count',
+                        data: [12, 45, 180, 220],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Chart 4: Attendance Line
+            const ctx4 = document.getElementById('attendanceTrendChart').getContext('2d');
+            chartInstances.attendance = new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: [95, 93, 91, 92.4],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
